@@ -30,3 +30,15 @@ jobs:
           PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
           WALLET_NAME: ${{ secrets.WALLET_NAME }}
         run: node GA_Sepolia-Holesky.js
+
+      - name: Run Holesky to Xion Testnet
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          WALLET_NAME: ${{ secrets.WALLET_NAME }}
+        run: node GA_Holesky-Xion.js
+
+      - name: Run Holesky to Babylon Testnet
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          WALLET_NAME: ${{ secrets.WALLET_NAME }}
+        run: node GA_Holesky-Babylon.js
