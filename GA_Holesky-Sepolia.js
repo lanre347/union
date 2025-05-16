@@ -847,12 +847,12 @@ function timelog() {
 
 async function pollPacketHash(txHash, retries = 50, intervalMs = 5000) {
   const headers = {
-    accept: 'application/graphql-response+json, application/json',
+    'accept': 'application/graphql-response+json, application/json',
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'en-US,en;q=0.9,id;q=0.8',
     'content-type': 'application/json',
-    origin: 'https://app-union.build',
-    referer: 'https://app.union.build/',
+    'origin': 'https://app-union.build',
+    'referer': 'https://app.union.build/',
     'user-agent': 'Mozilla/5.0',
   };
   const data = {

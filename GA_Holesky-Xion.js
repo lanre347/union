@@ -830,27 +830,13 @@ const graphqlEndpoint = 'https://graphql.union.build/v1/graphql';
 const baseExplorerUrl = 'https://holesky.etherscan.io';
 const unionUrl = 'https://app.union.build/explorer';
 
-// Multiple RPC endpoints for better reliability
-const rpcProviders = [
-  'https://ethereum-holesky-rpc.publicnode.com',
-  'https://rpc.ankr.com/eth_holesky', 
-  'https://1rpc.io/holesky',
-  'https://holesky.drpc.org',
-  'https://endpoints.omniatech.io/v1/eth/holesky/public'
-].map(url => new JsonRpcProvider(url, undefined, { polling: true, staticNetwork: true }));
-
+// RPC Endpoints
+const rpcProvider = [new JsonRpcProvider('https://ethereum-holesky-rpc.publicnode.com')];
 let currentRpcProviderIndex = 0;
 
 // Get current provider or rotate if needed
-function getProvider() {
-  return rpcProviders[currentRpcProviderIndex];
-}
-
-// Rotate to next provider
-function rotateProvider() {
-  currentRpcProviderIndex = (currentRpcProviderIndex + 1) % rpcProviders.length;
-  logger.info(`Switching to RPC provider #${currentRpcProviderIndex + 1}`);
-  return rpcProviders[currentRpcProviderIndex];
+function provider() {
+  return rpcProvider[currentRpcProviderIndex];
 }
 
 const explorer = {
@@ -869,15 +855,15 @@ function timelog() {
 }
 
 // Enhanced with retries and backoff
-async function waitForTransaction(txHash, maxRetries = 20, initialBackoff = 3000) {
-  let provider = getProvider();
+async function waitForTransaction(txHash, maxRetries = 40, initialBackoff = 3000) {
+  // let provider = provider();
   let retries = 0;
   let backoff = initialBackoff;
 
   while (retries < maxRetries) {
     try {
       logger.loading(`Waiting for transaction ${txHash} to be confirmed (attempt ${retries + 1}/${maxRetries})...`);
-      const receipt = await provider.getTransactionReceipt(txHash);
+      const receipt = await provider().getTransactionReceipt(txHash);
       
       if (receipt) {
         logger.success(`Transaction confirmed with ${receipt.confirmations} confirmations`);
@@ -885,12 +871,6 @@ async function waitForTransaction(txHash, maxRetries = 20, initialBackoff = 3000
       }
     } catch (error) {
       logger.warn(`Error checking transaction status: ${error.message}`);
-      
-      // If we get timeout or connection errors, rotate providers
-      if (error.code === 'TIMEOUT' || error.code === 'SERVER_ERROR' || 
-          error.code === 'UNKNOWN_ERROR' || error.message.includes('timeout')) {
-        provider = rotateProvider();
-      }
     }
     
     retries++;
@@ -903,7 +883,7 @@ async function waitForTransaction(txHash, maxRetries = 20, initialBackoff = 3000
   throw new Error(`Transaction ${txHash} not confirmed after ${maxRetries} attempts`);
 }
 
-async function pollPacketHash(txHash, retries = 40, initialIntervalMs = 5000) {
+async function pollPacketHash(txHash, retries = 50, initialIntervalMs = 5000) {
   const headers = {
     'accept': 'application/graphql-response+json, application/json',
     'accept-encoding': 'gzip, deflate, br, zstd',
@@ -954,16 +934,16 @@ async function pollPacketHash(txHash, retries = 40, initialIntervalMs = 5000) {
   return null;
 }
 
-async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
+async function checkBalanceAndApprove(wallet, chainlinkAddress, spenderAddress) {
   let retries = 0;
   const maxRetries = 5;
   
   while (retries < maxRetries) {
     try {
-      const usdcContract = new ethers.Contract(usdcAddress, CHAINLINK_ABI, wallet);
+      const chainlinkContract = new ethers.Contract(chainlinkAddress, CHAINLINK_ABI, wallet);
       
       // Check balance
-      const balance = await usdcContract.balanceOf(wallet.address);
+      const balance = await chainlinkContract.balanceOf(wallet.address);
       if (balance === 0n) {
         logger.error(`${wallet.address} does not have any LINK tokens. Please fund your wallet first!`);
         return false;
@@ -972,13 +952,13 @@ async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
       logger.info(`LINK balance: ${ethers.formatUnits(balance, 18)} LINK`);
       
       // Check allowance
-      const allowance = await usdcContract.allowance(wallet.address, spenderAddress);
+      const allowance = await chainlinkContract.allowance(wallet.address, spenderAddress);
       if (allowance === 0n) {
         logger.loading(`LINK token not approved. Sending approval transaction...`);
         const approveAmount = ethers.MaxUint256;
         
         try {
-          const tx = await usdcContract.approve(spenderAddress, approveAmount, {
+          const tx = await chainlinkContract.approve(spenderAddress, approveAmount, {
             maxFeePerGas: ethers.parseUnits('5', 'gwei'),
             maxPriorityFeePerGas: ethers.parseUnits('1.5', 'gwei'),
             gasLimit: 100000,
@@ -999,7 +979,7 @@ async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
           logger.error(`Approval failed: ${err.message}`);
           
           if (err.message.includes('timeout') || err.code === 'TIMEOUT') {
-            rotateProvider();
+            ;
             retries++;
             continue;
           }
@@ -1014,7 +994,7 @@ async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
       logger.error(`Error checking balance or allowance: ${err.message}`);
       
       if (err.message.includes('timeout') || err.code === 'TIMEOUT') {
-        rotateProvider();
+        ;
         retries++;
         await delay(3000);
         continue;
@@ -1029,7 +1009,7 @@ async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
 }
 
 async function sendFromWallet(walletInfo, maxTransaction) {
-  let wallet = new ethers.Wallet(walletInfo.privatekey, getProvider());
+  let wallet = new ethers.Wallet(walletInfo.privatekey, provider());
   logger.loading(`Sending from ${wallet.address} (${walletInfo.name || 'Unnamed'})`);
   
   // Check gas balance
@@ -1124,24 +1104,6 @@ async function sendFromWallet(walletInfo, maxTransaction) {
       } catch (err) {
         txAttempts++;
         logger.error(`Transaction attempt ${txAttempts} failed: ${err.message}`);
-        
-        // For certain errors, try rotating provider
-        if (err.message.includes('timeout') || 
-            err.code === 'TIMEOUT' || 
-            err.code === 'SERVER_ERROR' || 
-            err.message.includes('rate limit') ||
-            err.message.includes('rejected')) {
-          
-          wallet = new ethers.Wallet(walletInfo.privatekey, rotateProvider());
-          await delay(3000 * txAttempts); // Increase delay with each attempt
-        } else if (err.message.includes('nonce')) {
-          // Handle nonce errors
-          logger.warn(`Nonce issue detected, will retry with new nonce`);
-          await delay(5000);
-        } else {
-          // For other errors, just wait longer before retrying
-          await delay(5000 * txAttempts);
-        }
       }
     }
     
@@ -1152,7 +1114,7 @@ async function sendFromWallet(walletInfo, maxTransaction) {
     // Wait between transactions
     if (i < maxTransaction && txSuccess) {
       // Use random delay between transactions for more human-like behavior
-      const randomDelay = Math.floor(Math.random() * 5000) + 3000; // 3-8 seconds
+      const randomDelay = Math.floor(Math.random() * 2000) + 3000; // 3-8 seconds
       logger.info(`Waiting ${randomDelay}ms before next transaction...`);
       await delay(randomDelay);
     }
@@ -1186,17 +1148,6 @@ async function main() {
     };
     
     logger.loading(`Sending ${maxTransaction} Transactions from Holesky to Xion Testnet from ${walletInfo.name || 'Unnamed'}`);
-    
-    // Check providers before starting
-    logger.info("Testing RPC providers...");
-    for (let i = 0; i < rpcProviders.length; i++) {
-      try {
-        const blockNumber = await rpcProviders[i].getBlockNumber();
-        logger.success(`Provider ${i+1}: Connected successfully (block ${blockNumber})`);
-      } catch (err) {
-        logger.warn(`Provider ${i+1}: Connection failed - ${err.message}`);
-      }
-    }
     
     await sendFromWallet(walletInfo, maxTransaction);
     
