@@ -92,11 +92,63 @@ const graphqlEndpoint = 'https://graphql.union.build/v1/graphql';
 const baseExplorerUrl = 'https://sepolia.etherscan.io';
 const unionUrl = 'https://app.union.build/explorer';
 
-const rpcProviders = [new JsonRpcProvider('https://1rpc.io/sepolia')];
-let currentRpcProviderIndex = 0;
+const RPC_ENDPOINTS = [
+  'https://1rpc.io/sepolia',
+  'https://ethereum-sepolia-rpc.publicnode.com',
+  'https://rpc.sepolia.org',
+  'https://sepolia.drpc.org'
+];
+let currentRpcIndex = 0;
 
-function provider() {
-  return rpcProviders[currentRpcProviderIndex];
+async function getProvider() {
+  const maxRetries = RPC_ENDPOINTS.length * 2; // Try each endpoint twice
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const provider = new JsonRpcProvider(RPC_ENDPOINTS[currentRpcIndex]);
+
+    try {
+      // Test connection by getting block number
+      await provider.getBlockNumber();
+      return provider;
+    } catch (error) {
+      lastError = error;
+      logger.warn(`RPC ${currentRpcIndex} attempt ${attempt} failed: ${error.message}`);
+
+      // Rotate to next RPC endpoint
+      currentRpcIndex = (currentRpcIndex + 1) % RPC_ENDPOINTS.length;
+      await delay(2000 * attempt); // Exponential backoff
+    }
+  }
+
+  throw new Error(`All RPC endpoints failed: ${lastError.message}`);
+}
+
+async function sendTransactionWithRetry(contract, methodName, args, maxRetries = 3) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const tx = await contract[methodName](...args);
+      const receipt = await tx.wait();
+      return receipt;
+    } catch (error) {
+      lastError = error;
+      logger.warn(`Attempt ${attempt} failed: ${error.message}`);
+
+      if (error.code === 'CALL_EXCEPTION' || error.code === 'NETWORK_ERROR' || error.code === 'ECONNRESET') {
+        // Rotate RPC provider for network-related errors
+        currentRpcIndex = (currentRpcIndex + 1) % RPC_ENDPOINTS.length;
+        contract = contract.connect(new ethers.Wallet(contract.signer.privateKey, await getProvider()));
+        await delay(3000 * attempt); // Exponential backoff
+      } else {
+        // For other errors, just retry with same provider
+        await delay(2000 * attempt);
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 const explorer = {
@@ -114,14 +166,14 @@ function timelog() {
   return moment().tz('Asia/Jakarta').format('HH:mm:ss | DD-MM-YYYY');
 }
 
-async function pollPacketHash(txHash, retries = 50, intervalMs = 5000) {
+async function pollPacketHash(txHash, retries = 10, intervalMs = 10000) {
   const headers = {
-    accept: 'application/graphql-response+json, application/json',
+    'accept': 'application/graphql-response+json, application/json',
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'en-US,en;q=0.9,id;q=0.8',
     'content-type': 'application/json',
-    origin: 'https://app-union.build',
-    referer: 'https://app.union.build/',
+    'origin': 'https://app-union.build',
+    'referer': 'https://app.union.build/',
     'user-agent': 'Mozilla/5.0',
   };
   const data = {
@@ -139,7 +191,7 @@ async function pollPacketHash(txHash, retries = 50, intervalMs = 5000) {
 
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await axios.post(graphqlEndpoint, data, { headers });
+      const res = await axios.post(graphqlEndpoint, data, { headers, timeout: 30000 });
       const result = res.data?.data?.v2_transfers;
       if (result && result.length > 0 && result[0].packet_hash) {
         return result[0].packet_hash;
@@ -149,6 +201,8 @@ async function pollPacketHash(txHash, retries = 50, intervalMs = 5000) {
     }
     await delay(intervalMs);
   }
+  logger.warn(`Failed to get packet hash after ${retries} attempts`);
+  return null;
 }
 
 async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
@@ -179,9 +233,23 @@ async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
 }
 
 async function sendFromWallet(walletInfo, maxTransaction) {
-  const wallet = new ethers.Wallet(walletInfo.privatekey, provider());
+  let wallet;
+  try {
+    wallet = new ethers.Wallet(walletInfo.privatekey, await getProvider());
+  } catch (error) {
+    logger.error(`Failed to initialize wallet: ${error.message}`);
+    return;
+  }
   logger.loading(`Sending from ${wallet.address} (${walletInfo.name || 'Unnamed'})`);
-  const shouldProceed = await checkBalanceAndApprove(wallet, USDC_ADDRESS, contractAddress);
+
+  let shouldProceed;
+  try {
+    shouldProceed = await checkBalanceAndApprove(wallet, USDC_ADDRESS, contractAddress);
+  } catch (error) {
+    logger.error(`Balance check failed: ${error.message}`);
+    return;
+  }
+
   if (!shouldProceed) return;
 
   const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, wallet);
@@ -212,13 +280,18 @@ async function sendFromWallet(walletInfo, maxTransaction) {
     try {
       const startTime = Date.now();
 
-      const tx = await contract.send(channelId, timeoutHeight, timeoutTimestamp, salt, instruction);
-      await tx.wait(1);
+      const tx = await sendTransactionWithRetry(
+        contract,
+        'send',
+        [channelId, timeoutHeight, timeoutTimestamp, salt, instruction],
+        3 // Retry up to 3 times
+      );
 
       const endTime = Date.now();
       const txTime = endTime - startTime;
 
       logger.success(`${timelog()} | ${walletInfo.name || 'Unnamed'} | Transaction Confirmed: ${explorer.tx(tx.hash)} (${txTime}ms)`);
+
       const txHash = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`;
       const packetHash = await pollPacketHash(txHash);
       if (packetHash) {
