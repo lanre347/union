@@ -4,7 +4,7 @@ const moment = require('moment-timezone');
 require('dotenv').config();
 
 const log = (message, style) => {
-    console.log(`%c${message}`, style);
+  console.log(`%c${message}`, style);
 }
 
 const logger = {
@@ -92,7 +92,7 @@ const graphqlEndpoint = 'https://graphql.union.build/v1/graphql';
 const baseExplorerUrl = 'https://sepolia.etherscan.io';
 const unionUrl = 'https://app.union.build/explorer';
 
-const rpcProviders = [new JsonRpcProvider('https://ethereum-sepolia-rpc.publicnode.com')];
+const rpcProviders = [new JsonRpcProvider('https://1rpc.io/sepolia')];
 let currentRpcProviderIndex = 0;
 
 function provider() {
@@ -166,8 +166,8 @@ async function checkBalanceAndApprove(wallet, usdcAddress, spenderAddress) {
     try {
       const tx = await usdcContract.approve(spenderAddress, approveAmount);
       const receipt = await tx.wait();
-      
-      
+
+
       logger.success(`Approve confirmed: ${explorer.tx(receipt.hash)}`);
       await delay(3000);
     } catch (err) {
@@ -184,14 +184,14 @@ async function sendFromWallet(walletInfo, maxTransaction) {
   const shouldProceed = await checkBalanceAndApprove(wallet, USDC_ADDRESS, contractAddress);
   if (!shouldProceed) return;
 
-  const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, wallet); 
+  const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, wallet);
   const addressHex = wallet.address.slice(2).toLowerCase();
   const channelId = 8;
   const timeoutHeight = 0;
-  
+
   for (let i = 1; i <= maxTransaction; i++) {
     logger.step(`${walletInfo.name || 'Unnamed'} | Transaction ${i}/${maxTransaction}`);
-    
+
     const now = BigInt(Date.now()) * 1_000_000n;
     const oneDayNs = 86_400_000_000_000n;
     const timeoutTimestamp = (now + oneDayNs).toString();
@@ -211,13 +211,13 @@ async function sendFromWallet(walletInfo, maxTransaction) {
 
     try {
       const startTime = Date.now();
-    
+
       const tx = await contract.send(channelId, timeoutHeight, timeoutTimestamp, salt, instruction);
       await tx.wait(1);
-      
+
       const endTime = Date.now();
       const txTime = endTime - startTime;
-      
+
       logger.success(`${timelog()} | ${walletInfo.name || 'Unnamed'} | Transaction Confirmed: ${explorer.tx(tx.hash)} (${txTime}ms)`);
       const txHash = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`;
       const packetHash = await pollPacketHash(txHash);
@@ -235,10 +235,10 @@ async function sendFromWallet(walletInfo, maxTransaction) {
 }
 
 async function main() {
-    // Load environment variables
+  // Load environment variables
   const privateKey = process.env.PRIVATE_KEY;
   const walletName = process.env.WALLET_NAME || 'Unnamed';
-  
+
   if (!privateKey) {
     logger.error('PRIVATE_KEY environment variable is not set');
     process.exit(1);
@@ -258,12 +258,12 @@ async function main() {
     privatekey: privateKey,
     name: walletName,
   };
-  
+
 
   logger.loading(`Sending ${maxTransaction} Transaction Sepolia to Holesky from ${walletInfo.name || 'Unnamed'}`);
   await sendFromWallet(walletInfo, maxTransaction);
 
-  
+
   // Keep the screen rendered until user exits
   logger.info("All transactions completed.");
 }
