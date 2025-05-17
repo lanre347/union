@@ -1,10 +1,10 @@
 # Union Testnet Automation 🔄
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/your-username/union-auto/run_bridge.yml?style=flat-square)
+[![Scheduled Daily Running](https://github.com/4funnds/union-auto/actions/workflows/run_bridge.yml/badge.svg?event=schedule)](https://github.com/4funnds/union-auto/actions/workflows/run_bridge.yml)
 ![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Schedule and execute transactions between Holesky, Sepolia, Babylon, and Xion testnets using GitHub Actions.
+Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Schedule and execute transactions between Holesky, Sepolia, and Babylon testnets using GitHub Actions.
 
 ## 📋 Table of Contents
 
@@ -24,10 +24,12 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
   - Holesky ↔️ Sepolia
   - Holesky ↔️ Babylon
   - Holesky ↔️ Xion
+  - Sepolia ↔️ Babylon
+  - Sepolia ↔️ Holesky
 - ⏱️ **Scheduled Execution**: Run transactions automatically every 12 hours using GitHub Actions
 - 🔍 **Transaction Tracking**: Monitor transaction status and packet confirmation
-- 📊 **Smart Transaction Management**: Random number of transactions per run (100-200)
-- 🛡️ **Error Handling**: Robust error handling and retry mechanisms
+- 📊 **Smart Transaction Management**: Random number of transactions per run (50-110)
+- 🛡️ **Error Handling**: Robust error handling and retry mechanisms with multiple RPC endpoints
 - 📝 **Detailed Logging**: Comprehensive logging with timestamps and transaction details
 
 ## 🚀 Prerequisites
@@ -74,6 +76,7 @@ node GA_Holesky-Sepolia.js
 node GA_Holesky-Babylon.js
 node GA_Holesky-Xion.js
 node GA_Sepolia-Holesky.js
+node GA_Sepolia-Babylon.js
 ```
 
 ### Automated Execution
@@ -88,6 +91,7 @@ The GitHub Action workflow runs automatically every 12 hours. You can also trigg
 ├── GA_Holesky-Babylon.js   # Holesky to Babylon bridge script
 ├── GA_Holesky-Sepolia.js   # Holesky to Sepolia bridge script
 ├── GA_Holesky-Xion.js      # Holesky to Xion bridge script
+├── GA_Sepolia-Babylon.js   # Sepolia to Babylon bridge script
 ├── GA_Sepolia-Holesky.js   # Sepolia to Holesky bridge script
 ├── package.json            # Project dependencies
 └── README.md              # Project documentation
