@@ -4,7 +4,7 @@ const moment = require('moment-timezone');
 require('dotenv').config();
 
 const log = (message, style) => {
-    console.log(`%c${message}`, style);
+  console.log(`%c${message}`, style);
 }
 
 const logger = {
@@ -863,7 +863,7 @@ async function waitForTransaction(txHash, maxRetries = 40, initialBackoff = 3000
     try {
       logger.loading(`Waiting for transaction ${txHash} to be confirmed (attempt ${retries + 1}/${maxRetries})...`);
       const receipt = await provider().getTransactionReceipt(txHash);
-      
+
       if (receipt) {
         logger.success(`Transaction confirmed with ${receipt.confirmations} confirmations`);
         return receipt;
@@ -871,14 +871,14 @@ async function waitForTransaction(txHash, maxRetries = 40, initialBackoff = 3000
     } catch (error) {
       logger.warn(`Error checking transaction status: ${error.message}`);
     }
-    
+
     retries++;
     await delay(backoff);
-    
+
     // Exponential backoff with a cap
     backoff = Math.min(backoff * 1.5, 1000);
   }
-  
+
   throw new Error(`Transaction ${txHash} not confirmed after ${maxRetries} attempts`);
 }
 
@@ -892,7 +892,7 @@ async function pollPacketHash(txHash, retries = 40, initialIntervalMs = 5000) {
     'referer': 'https://app.union.build/',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   };
-  
+
   const data = {
     query: `
       query ($submission_tx_hash: String!) {
@@ -907,15 +907,15 @@ async function pollPacketHash(txHash, retries = 40, initialIntervalMs = 5000) {
   };
 
   let intervalMs = initialIntervalMs;
-  
+
   for (let i = 0; i < retries; i++) {
     try {
       logger.loading(`Polling for packet hash (attempt ${i + 1}/${retries})...`);
-      const res = await axios.post(graphqlEndpoint, data, { 
+      const res = await axios.post(graphqlEndpoint, data, {
         headers,
         timeout: 15000 // 15 second timeout
       });
-      
+
       const result = res.data?.data?.v2_transfers;
       if (result && result.length > 0 && result[0].packet_hash) {
         return result[0].packet_hash;
@@ -923,12 +923,12 @@ async function pollPacketHash(txHash, retries = 40, initialIntervalMs = 5000) {
     } catch (e) {
       logger.warn(`Packet polling error: ${e.message}`);
     }
-    
+
     // Exponential backoff with maximum interval
     intervalMs = Math.min(intervalMs * 1.5, 20000);
     await delay(intervalMs);
   }
-  
+
   logger.warn(`Could not find packet hash for transaction ${txHash} after ${retries} attempts`);
   return null;
 }
@@ -936,36 +936,36 @@ async function pollPacketHash(txHash, retries = 40, initialIntervalMs = 5000) {
 async function checkBalanceAndApprove(wallet, chainlinkAddress, spenderAddress) {
   let retries = 0;
   const maxRetries = 5;
-  
+
   while (retries < maxRetries) {
     try {
       const chainlinkContract = new ethers.Contract(chainlinkAddress, CHAINLINK_ABI, wallet);
-      
+
       // Check balance
       const balance = await chainlinkContract.balanceOf(wallet.address);
       if (balance === 0n) {
         logger.error(`${wallet.address} does not have any LINK tokens. Please fund your wallet first!`);
         return false;
       }
-      
+
       logger.info(`LINK balance: ${ethers.formatUnits(balance, 18)} LINK`);
-      
+
       // Check allowance
       const allowance = await chainlinkContract.allowance(wallet.address, spenderAddress);
       if (allowance === 0n) {
         logger.loading(`LINK token not approved. Sending approval transaction...`);
         const approveAmount = ethers.MaxUint256;
-        
+
         try {
           const tx = await chainlinkContract.approve(spenderAddress, approveAmount, {
             maxFeePerGas: ethers.parseUnits('5', 'gwei'),
             maxPriorityFeePerGas: ethers.parseUnits('1.5', 'gwei'),
             gasLimit: 100000,
           });
-          
+
           logger.info(`Approval transaction sent: ${explorer.tx(tx.hash)}`);
           const receipt = await waitForTransaction(tx.hash);
-          
+
           if (receipt && receipt.status === 1) {
             logger.success(`Approval confirmed: ${explorer.tx(receipt.hash)}`);
             await delay(3000);
@@ -976,13 +976,13 @@ async function checkBalanceAndApprove(wallet, chainlinkAddress, spenderAddress) 
           }
         } catch (err) {
           logger.error(`Approval failed: ${err.message}`);
-          
+
           if (err.message.includes('timeout') || err.code === 'TIMEOUT') {
             ;
             retries++;
             continue;
           }
-          
+
           return false;
         }
       } else {
@@ -991,18 +991,18 @@ async function checkBalanceAndApprove(wallet, chainlinkAddress, spenderAddress) 
       }
     } catch (err) {
       logger.error(`Error checking balance or allowance: ${err.message}`);
-      
+
       if (err.message.includes('timeout') || err.code === 'TIMEOUT') {
         ;
         retries++;
         await delay(3000);
         continue;
       }
-      
+
       return false;
     }
   }
-  
+
   logger.error(`Failed to check balance and approve after ${maxRetries} attempts`);
   return false;
 }
@@ -1010,19 +1010,19 @@ async function checkBalanceAndApprove(wallet, chainlinkAddress, spenderAddress) 
 async function sendFromWallet(walletInfo, maxTransaction) {
   let wallet = new ethers.Wallet(walletInfo.privatekey, provider());
   logger.loading(`Sending from ${wallet.address} (${walletInfo.name || 'Unnamed'})`);
-  
+
   // Check gas balance
   try {
     const balance = await wallet.provider.getBalance(wallet.address);
     logger.info(`ETH balance: ${ethers.formatEther(balance)} ETH`);
-    
+
     if (balance < ethers.parseEther('0.01')) {
       logger.warn(`Low ETH balance (${ethers.formatEther(balance)} ETH). You may need more ETH for gas.`);
     }
   } catch (error) {
     logger.warn(`Error checking ETH balance: ${error.message}`);
   }
-  
+
   const shouldProceed = await checkBalanceAndApprove(wallet, CHAINLINK_ADDRESS, contractAddress);
   if (!shouldProceed) return;
 
@@ -1030,10 +1030,10 @@ async function sendFromWallet(walletInfo, maxTransaction) {
   const addressHex = wallet.address.slice(2).toLowerCase();
   const channelId = 3;
   const timeoutHeight = 0;
-  
+
   for (let i = 1; i <= maxTransaction; i++) {
     logger.step(`${walletInfo.name || 'Unnamed'} | Transaction ${i}/${maxTransaction}`);
-    
+
     const now = BigInt(Date.now()) * 1_000_000n;
     const oneDayNs = 86_400_000_000_000n;
     const timeoutTimestamp = (now + oneDayNs).toString();
@@ -1043,7 +1043,7 @@ async function sendFromWallet(walletInfo, maxTransaction) {
     const operand = '0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000001e000000000000000000000000000000000000000000000000000005af3107a4000000000000000000000000000000000000000000000000000000000000000022000000000000000000000000000000000000000000000000000000000000002600000000000000000000000000000000000000000000000000000000000000012000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a000000000000000000000000000000000000000000000000000005af3107a40000000000000000000000000000000000000000000000000000000000000000014' +
       addressHex +
       '000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a62626e316d32336c63736c683268723875633838686b733972716c79676c3677777373377a61746a7161000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014685ce6742351ae9b618f383883d6d1e0c5a31b4b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000044c494e4b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000f436861696e4c696e6b20546f6b656e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003e62626e317579797a71776e787135686d7234647267383836717a37777977376d6e78613836703979746d6b397a646b6375357a72303935736471643735370000';
-    
+
     const instruction = {
       version: 0,
       opcode: 2,
@@ -1053,19 +1053,19 @@ async function sendFromWallet(walletInfo, maxTransaction) {
     let txAttempts = 0;
     const maxTxAttempts = 5;
     let txSuccess = false;
-    
+
     while (txAttempts < maxTxAttempts && !txSuccess) {
       try {
         const startTime = Date.now();
-        
+
         const gasPrice = await wallet.provider.getFeeData();
-        
+
         // Create transaction with gas estimates
         const tx = await contract.send(
-          channelId, 
-          timeoutHeight, 
-          timeoutTimestamp, 
-          salt, 
+          channelId,
+          timeoutHeight,
+          timeoutTimestamp,
+          salt,
           instruction,
           {
             maxFeePerGas: gasPrice.maxFeePerGas * 120n / 100n, // Increase by 20% for faster confirmation
@@ -1073,28 +1073,28 @@ async function sendFromWallet(walletInfo, maxTransaction) {
             gasLimit: 500000, // Set a reasonable gas limit
           }
         );
-        
+
         logger.info(`Transaction sent: ${explorer.tx(tx.hash)}`);
-        
+
         // Wait for confirmation with our improved wait function
         const receipt = await waitForTransaction(tx.hash);
-        
+
         const endTime = Date.now();
         const txTime = endTime - startTime;
-        
+
         if (receipt && receipt.status === 1) {
           logger.success(`${timelog()} | ${walletInfo.name || 'Unnamed'} | Transaction Confirmed: ${explorer.tx(tx.hash)} (${txTime}ms)`);
-          
+
           // Get packet hash (Union bridge transfer info)
           const txHash = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`;
           const packetHash = await pollPacketHash(txHash);
-          
+
           if (packetHash) {
             logger.success(`${timelog()} | ${walletInfo.name || 'Unnamed'} | Packet Submitted: ${union.tx(packetHash)}`);
           } else {
             logger.warn(`${timelog()} | ${walletInfo.name || 'Unnamed'} | No packet hash found, but transaction confirmed`);
           }
-          
+
           txSuccess = true;
         } else {
           logger.error(`Transaction failed or reverted`);
@@ -1105,7 +1105,7 @@ async function sendFromWallet(walletInfo, maxTransaction) {
         logger.error(`Transaction attempt ${txAttempts} failed: ${err.message}`);
       }
     }
-    
+
     if (!txSuccess) {
       logger.error(`Failed to send transaction ${i} after ${maxTxAttempts} attempts`);
     }
@@ -1125,7 +1125,7 @@ async function main() {
     // Load environment variables
     const privateKey = process.env.PRIVATE_KEY;
     const walletName = process.env.WALLET_NAME || 'Unnamed';
-    
+
     if (!privateKey) {
       logger.error('PRIVATE_KEY environment variable is not set');
       process.exit(1);
@@ -1140,16 +1140,16 @@ async function main() {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    const maxTransaction = getRandomInt(100, 200); // Reduced from 100-200 for testing
+    const maxTransaction = getRandomInt(50, 110); // Reduced from 100-200 for testing
     let walletInfo = {
       privatekey: privateKey,
       name: walletName,
     };
-    
+
     logger.loading(`Sending ${maxTransaction} Transactions from Holesky to Babylon Testnet from ${walletInfo.name || 'Unnamed'}`);
-    
+
     await sendFromWallet(walletInfo, maxTransaction);
-    
+
     logger.info("All transactions completed.");
   } catch (err) {
     logger.error(`Main error: ${err.message}`);

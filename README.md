@@ -1,0 +1,116 @@
+# Union Testnet Automation 🔄
+
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/your-username/union-auto/run_bridge.yml?style=flat-square)
+![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+
+Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Schedule and execute transactions between Holesky, Sepolia, Babylon, and Xion testnets using GitHub Actions.
+
+## 📋 Table of Contents
+
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [GitHub Actions](#github-actions)
+- [Roadmap](#roadmap)
+- [License](#license)
+
+## ✨ Features
+
+- 🔄 **Cross-Chain Automation**: Automate transactions between multiple testnets
+  - Holesky ↔️ Sepolia
+  - Holesky ↔️ Babylon
+  - Holesky ↔️ Xion
+- ⏱️ **Scheduled Execution**: Run transactions automatically every 12 hours using GitHub Actions
+- 🔍 **Transaction Tracking**: Monitor transaction status and packet confirmation
+- 📊 **Smart Transaction Management**: Random number of transactions per run (100-200)
+- 🛡️ **Error Handling**: Robust error handling and retry mechanisms
+- 📝 **Detailed Logging**: Comprehensive logging with timestamps and transaction details
+
+## 🚀 Prerequisites
+
+- Node.js >= 18.0.0
+- GitHub account (for automated runs)
+- Wallet with testnet tokens
+- USDC on respective testnets
+
+## 📥 Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/your-username/union-testnet-automation.git
+cd union-testnet-automation
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Create a .env file:
+```bash
+PRIVATE_KEY=your_wallet_private_key
+WALLET_NAME=your_wallet_name
+```
+
+## ⚙️ Configuration
+
+Set up the following GitHub Secrets for automated runs:
+
+- `PRIVATE_KEY`: Your wallet's private key
+- `WALLET_NAME`: Your wallet's name (for logging purposes)
+
+## 💻 Usage
+
+### Manual Execution
+
+Run individual scripts:
+
+```bash
+node GA_Holesky-Sepolia.js
+node GA_Holesky-Babylon.js
+node GA_Holesky-Xion.js
+node GA_Sepolia-Holesky.js
+```
+
+### Automated Execution
+
+The GitHub Action workflow runs automatically every 12 hours. You can also trigger it manually from the Actions tab.
+
+## 📁 Project Structure
+
+```
+├── .github/workflows/
+│   └── run_bridge.yml      # GitHub Actions workflow configuration
+├── GA_Holesky-Babylon.js   # Holesky to Babylon bridge script
+├── GA_Holesky-Sepolia.js   # Holesky to Sepolia bridge script
+├── GA_Holesky-Xion.js      # Holesky to Xion bridge script
+├── GA_Sepolia-Holesky.js   # Sepolia to Holesky bridge script
+├── package.json            # Project dependencies
+└── README.md              # Project documentation
+```
+
+## 🤖 GitHub Actions
+
+The project uses GitHub Actions for automation:
+
+- Runs every 12 hours automatically
+- Executes all bridge scripts sequentially
+- Manages dependencies and environment setup
+- Provides execution logs and status updates
+
+View the workflow file: [.github/workflows/run_bridge.yml](.github/workflows/run_bridge.yml)
+
+## 🛣️ Roadmap
+
+- [ ] Add support for additional testnets
+- [ ] Implement transaction status notifications
+- [ ] Create a web dashboard for monitoring
+- [ ] Add transaction analytics and reporting
+
+## 📄 License
+
+This project is licensed under the MIT License.

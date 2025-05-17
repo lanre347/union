@@ -4,7 +4,7 @@ const axios = require('axios');
 const moment = require('moment-timezone');
 
 const log = (message, style) => {
-    console.log(`%c${message}`, style);
+  console.log(`%c${message}`, style);
 }
 
 const logger = {
@@ -897,8 +897,8 @@ async function checkBalanceAndApprove(wallet, chainlinkAddress, spenderAddress) 
     try {
       const tx = await chainlinkContract.approve(spenderAddress, approveAmount);
       const receipt = await tx.wait();
-      
-      
+
+
       logger.success(`Approve confirmed: ${explorer.tx(receipt.hash)}`);
       await delay(3000);
     } catch (err) {
@@ -915,14 +915,14 @@ async function sendFromWallet(walletInfo, maxTransaction) {
   const shouldProceed = await checkBalanceAndApprove(wallet, CHAINLINK_ADDRESS, contractAddress);
   if (!shouldProceed) return;
 
-  const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, wallet); 
+  const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, wallet);
   const addressHex = wallet.address.slice(2).toLowerCase();
   const channelId = 2;
   const timeoutHeight = 0;
-  
+
   for (let i = 1; i <= maxTransaction; i++) {
     logger.step(`${walletInfo.name || 'Unnamed'} | Transaction ${i}/${maxTransaction}`);
-    
+
     const now = BigInt(Date.now()) * 1_000_000n;
     const oneDayNs = 86_400_000_000_000n;
     const timeoutTimestamp = (now + oneDayNs).toString();
@@ -942,13 +942,13 @@ async function sendFromWallet(walletInfo, maxTransaction) {
 
     try {
       const startTime = Date.now();
-    
+
       const tx = await contract.send(channelId, timeoutHeight, timeoutTimestamp, salt, instruction);
       await tx.wait(1);
-      
+
       const endTime = Date.now();
       const txTime = endTime - startTime;
-      
+
       logger.success(`${timelog()} | ${walletInfo.name || 'Unnamed'} | Transaction Confirmed: ${explorer.tx(tx.hash)} (${txTime}ms)`);
       const txHash = tx.hash.startsWith('0x') ? tx.hash : `0x${tx.hash}`;
       const packetHash = await pollPacketHash(txHash);
@@ -966,10 +966,10 @@ async function sendFromWallet(walletInfo, maxTransaction) {
 }
 
 async function main() {
-    // Load environment variables
+  // Load environment variables
   const privateKey = process.env.PRIVATE_KEY;
   const walletName = process.env.WALLET_NAME || 'Unnamed';
-  
+
   if (!privateKey) {
     logger.error('PRIVATE_KEY environment variable is not set');
     process.exit(1);
@@ -989,13 +989,13 @@ async function main() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  const maxTransactionInput = getRandomInt(100, 200);
+  const maxTransactionInput = getRandomInt(50, 110);
   const maxTransaction = parseInt(maxTransactionInput);
 
   logger.loading(`Sending ${maxTransaction} Transaction Holesky to Sepolia from ${walletInfo.name || 'Unnamed'}`);
   await sendFromWallet(walletInfo, maxTransaction);
-  }
-  logger.info("All transactions completed.");
+}
+logger.info("All transactions completed.");
 
 // Initialize the application
 main().catch((err) => {

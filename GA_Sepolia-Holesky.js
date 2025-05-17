@@ -253,7 +253,7 @@ async function main() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  const maxTransaction = getRandomInt(100, 200);
+  const maxTransaction = getRandomInt(50, 110);
   let walletInfo = {
     privatekey: privateKey,
     name: walletName,
