@@ -1,5 +1,5 @@
 const { exec } = require('child_process');
-const { cron } = require('node-cron');
+const cron = require('node-cron');
 
 const scripts = [
     'GA_Holesky-Babylon.js',
