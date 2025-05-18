@@ -15,6 +15,7 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [GitHub Actions](#github-actions)
+- [Security Considerations](#security-considerations)
 - [Roadmap](#roadmap)
 - [License](#license)
 
@@ -107,6 +108,32 @@ The project uses GitHub Actions for automation:
 - Provides execution logs and status updates
 
 View the workflow file: [.github/workflows/run_bridge.yml](.github/workflows/run_bridge.yml)
+
+## 🔒 Security Considerations
+
+### Environment Variables
+- Never commit `.env` files to version control
+- Use secure secrets management in GitHub Actions
+- Rotate private keys regularly
+
+### API Security
+- Use private RPC endpoints when possible
+- Implement rate limiting for API calls
+- Monitor for unusual transaction patterns
+
+### Best Practices
+- Keep dependencies updated
+- Monitor GitHub security alerts
+- Use checksummed addresses
+- Follow secure Docker practices
+
+### Limitations
+- Maximum transactions per run: 50-110
+- RPC endpoint rate limits apply
+- API timeouts after 15 seconds
+
+## ⚠️ Disclaimer
+This tool automates blockchain transactions. Use at your own risk and always verify transactions before approval.
 
 ## 🛣️ Roadmap
 

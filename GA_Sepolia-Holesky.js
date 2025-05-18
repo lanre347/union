@@ -336,7 +336,6 @@ async function main() {
   logger.loading(`Sending ${maxTransaction} Transaction Sepolia to Holesky from ${walletInfo.name || 'Unnamed'}`);
   await sendFromWallet(walletInfo, maxTransaction);
 
-
   // Keep the screen rendered until user exits
   logger.info("All transactions completed.");
 }
