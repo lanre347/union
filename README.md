@@ -1,10 +1,8 @@
 # Union Testnet Automation 🔄
-
-[![Scheduled Daily Running](https://github.com/4funnds/union-auto/actions/workflows/run_bridge.yml/badge.svg?event=schedule)](https://github.com/4funnds/union-auto/actions/workflows/run_bridge.yml)
 ![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
-Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Schedule and execute transactions between Holesky, Sepolia, and Babylon testnets using GitHub Actions.
+Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Schedule and execute transactions between Holesky, Sepolia, Babylon, BSC, SEI, Corn, and Xion testnets using GitHub Actions.
 
 ## 📋 Table of Contents
 
@@ -14,9 +12,8 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
-- [GitHub Actions](#github-actions)
+- [Adding New Bridge Routes](#adding-new-bridge-routes)
 - [Security Considerations](#security-considerations)
-- [Roadmap](#roadmap)
 - [License](#license)
 
 ## ✨ Features
@@ -27,6 +24,9 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
   - Holesky ↔️ Xion
   - Sepolia ↔️ Babylon
   - Sepolia ↔️ Holesky
+  - BSC ↔️ Babylon
+  - Corn ↔️ SEI
+  - SEI ↔️ BSC
 - ⏱️ **Scheduled Execution**: Run transactions automatically every 12 hours using GitHub Actions
 - 🔍 **Transaction Tracking**: Monitor transaction status and packet confirmation
 - 📊 **Smart Transaction Management**: Random number of transactions per run (50-110)
@@ -38,26 +38,26 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
 - Node.js >= 18.0.0
 - GitHub account (for automated runs)
 - Wallet with testnet tokens
-- USDC on respective testnets
+- USDC or native tokens on respective testnets
 
 ## 📥 Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/your-username/union-testnet-automation.git
-cd union-testnet-automation
-```
+   ```bash
+   git clone https://github.com/your-username/union-auto.git
+   cd union-auto
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+   ```bash
+   npm install
+   ```
 
-3. Create a .env file:
-```bash
-PRIVATE_KEY=your_wallet_private_key
-WALLET_NAME=your_wallet_name
-```
+3. Create a `.env` file with your wallet info:
+   ```
+   PRIVATE_KEY=0xYourPrivateKeyHere
+   WALLET_NAME=YourWalletName
+   ```
 
 ## ⚙️ Configuration
 
@@ -78,6 +78,15 @@ node GA_Holesky-Babylon.js
 node GA_Holesky-Xion.js
 node GA_Sepolia-Holesky.js
 node GA_Sepolia-Babylon.js
+node BSC-Babylon.js
+node Corn-Sei.js
+node SEI-BSC.js
+```
+
+Or run all scripts with the index:
+
+```bash
+npm start
 ```
 
 ### Automated Execution
@@ -132,16 +141,6 @@ View the workflow file: [.github/workflows/run_bridge.yml](.github/workflows/run
 - RPC endpoint rate limits apply
 - API timeouts after 15 seconds
 
-## ⚠️ Disclaimer
-This tool automates blockchain transactions. Use at your own risk and always verify transactions before approval.
-
-## 🛣️ Roadmap
-
-- [ ] Add support for additional testnets
-- [ ] Implement transaction status notifications
-- [ ] Create a web dashboard for monitoring
-- [ ] Add transaction analytics and reporting
-
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the LICENSE file for details.

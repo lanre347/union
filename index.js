@@ -1,5 +1,4 @@
 const { exec } = require('child_process');
-const cron = require('node-cron');
 
 const scripts = [
     'GA_Holesky-Babylon.js',
@@ -24,8 +23,4 @@ function runScript(script) {
         console.log(`[${script}] exited with code ${code}`);
     });
 }
-
-// Jalankan semua script secara paralel
-cron.schedule('0 */12 * * *', () => {
-    scripts.forEach(runScript);
-});
+scripts.forEach(runScript);
