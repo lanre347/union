@@ -1,6 +1,6 @@
 # Union Testnet Automation 🔄
 ![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
-![License](https://img.shiel## 🔒 Security Considerationss.io/badge/license-MIT-blue?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 
 Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Execute transactions between Holesky, Sepolia, Babylon, BSC, SEI, Corn, and Xion testnets using a convenient batch execution system.
 
