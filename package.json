@@ -4,7 +4,9 @@
   "description": "A Union Testnet automation bot with Blessed terminal UI, transaction charts, and more.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js all",
+    "ethereum": "node index.js ethereum",
+    "other": "node index.js other"
   },
   "author": "4funnds",
   "license": "MIT",

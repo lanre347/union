@@ -1,8 +1,8 @@
 # Union Testnet Automation 🔄
 ![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
+![License](https://img.shiel## 🔒 Security Considerationss.io/badge/license-MIT-blue?style=flat-square)
 
-Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Schedule and execute transactions between Holesky, Sepolia, Babylon, BSC, SEI, Corn, and Xion testnets using GitHub Actions.
+Automate your Union Testnet cross-chain transactions with this powerful NodeJS automation tool. Execute transactions between Holesky, Sepolia, Babylon, BSC, SEI, Corn, and Xion testnets using a convenient batch execution system.
 
 ## 📋 Table of Contents
 
@@ -12,9 +12,9 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
-- [Adding New Bridge Routes](#adding-new-bridge-routes)
-- [Security Considerations](#security-considerations)
-- [License](#license)
+- [Batch System](#-batch-system)
+- [Security Considerations](#-security-considerations)
+- [License](#-license)
 
 ## ✨ Features
 
@@ -27,24 +27,23 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
   - BSC ↔️ Babylon
   - Corn ↔️ SEI
   - SEI ↔️ BSC
-- ⏱️ **Scheduled Execution**: Run transactions automatically every 12 hours using GitHub Actions
 - 🔍 **Transaction Tracking**: Monitor transaction status and packet confirmation
-- 📊 **Smart Transaction Management**: Random number of transactions per run (50-110)
+- 📊 **Smart Transaction Management**: Random number of transactions per run
 - 🛡️ **Error Handling**: Robust error handling and retry mechanisms with multiple RPC endpoints
 - 📝 **Detailed Logging**: Comprehensive logging with timestamps and transaction details
+- 🔀 **Batch Execution**: Run scripts in organized batches (Ethereum networks, other networks)
 
 ## 🚀 Prerequisites
 
 - Node.js >= 18.0.0
-- GitHub account (for automated runs)
 - Wallet with testnet tokens
-- USDC or native tokens on respective testnets
+- USDC, Chainlink Token, and Native Token for Gas
 
 ## 📥 Installation
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/union-auto.git
+   git clone https://github.com/orionnion/UnionTestnet_Automation.git
    cd union-auto
    ```
 
@@ -61,85 +60,102 @@ Automate your Union Testnet cross-chain transactions with this powerful NodeJS a
 
 ## ⚙️ Configuration
 
-Set up the following GitHub Secrets for automated runs:
+Create a `.env` file with your wallet info:
 
 - `PRIVATE_KEY`: Your wallet's private key
 - `WALLET_NAME`: Your wallet's name (for logging purposes)
 
 ## 💻 Usage
 
-### Manual Execution
+### Execution
 
 Run individual scripts:
 
 ```bash
-node GA_Holesky-Sepolia.js
-node GA_Holesky-Babylon.js
-node GA_Holesky-Xion.js
-node GA_Sepolia-Holesky.js
-node GA_Sepolia-Babylon.js
+node Holesky-Sepolia.js
+node Holesky-Babylon.js
+node Holesky-Xion.js
+node Sepolia-Holesky.js
+node Sepolia-Babylon.js
 node BSC-Babylon.js
 node Corn-Sei.js
 node SEI-BSC.js
 ```
 
-Or run all scripts with the index:
+Run scripts in batches using the index.js:
 
 ```bash
-npm start
+# Run Ethereum-based scripts (Holesky, Sepolia)
+node index.js ethereum
+
+# Run other blockchain scripts (BSC, SEI, Corn)
+node index.js other
+
+# Run all scripts in sequence
+node index.js all
 ```
 
-### Automated Execution
+Or with npm scripts:
 
-The GitHub Action workflow runs automatically every 12 hours. You can also trigger it manually from the Actions tab.
+```bash
+npm run ethereum  # Run Ethereum batch
+npm run other     # Run other blockchains batch
+npm start         # Run all batches
+```
 
 ## 📁 Project Structure
 
 ```
-├── .github/workflows/
-│   └── run_bridge.yml      # GitHub Actions workflow configuration
-├── GA_Holesky-Babylon.js   # Holesky to Babylon bridge script
-├── GA_Holesky-Sepolia.js   # Holesky to Sepolia bridge script
-├── GA_Holesky-Xion.js      # Holesky to Xion bridge script
-├── GA_Sepolia-Babylon.js   # Sepolia to Babylon bridge script
-├── GA_Sepolia-Holesky.js   # Sepolia to Holesky bridge script
+├── Holesky-Babylon.js      # Holesky to Babylon bridge script
+├── Holesky-Sepolia.js      # Holesky to Sepolia bridge script
+├── Holesky-Xion.js         # Holesky to Xion bridge script
+├── Sepolia-Babylon.js      # Sepolia to Babylon bridge script
+├── Sepolia-Holesky.js      # Sepolia to Holesky bridge script
+├── BSC-Babylon.js          # BSC to Babylon bridge script
+├── Corn-Sei.js             # Corn to SEI bridge script
+├── SEI-BSC.js              # SEI to BSC bridge script 
+├── index.js                # Script orchestration with batch execution
 ├── package.json            # Project dependencies
-└── README.md              # Project documentation
+└── README.md               # Project documentation
 ```
 
-## 🤖 GitHub Actions
 
-The project uses GitHub Actions for automation:
+## � Batch System
 
-- Runs every 12 hours automatically
-- Executes all bridge scripts sequentially
-- Manages dependencies and environment setup
-- Provides execution logs and status updates
+The project uses a batch system to organize and run scripts efficiently:
 
-View the workflow file: [.github/workflows/run_bridge.yml](.github/workflows/run_bridge.yml)
+### Ethereum-based Batch
+Scripts for Ethereum testnets (Holesky, Sepolia):
+- `Holesky-Babylon.js`
+- `Holesky-Sepolia.js`
+- `Holesky-Xion.js`
+- `Sepolia-Babylon.js`
+- `Sepolia-Holesky.js`
 
-## 🔒 Security Considerations
+### Other Blockchains Batch
+Scripts for other blockchain testnets:
+- `BSC-Babylon.js`
+- `Corn-Sei.js`
+- `SEI-BSC.js`
+
+### Running Batches
+You can run specific batches or all batches using:
+```bash
+node index.js ethereum   # Run Ethereum batch
+node index.js other      # Run other blockchains batch
+node index.js all        # Run all batches
+```
+
+## �🔒 Security Considerations
 
 ### Environment Variables
 - Never commit `.env` files to version control
-- Use secure secrets management in GitHub Actions
-- Rotate private keys regularly
-
-### API Security
-- Use private RPC endpoints when possible
-- Implement rate limiting for API calls
-- Monitor for unusual transaction patterns
 
 ### Best Practices
 - Keep dependencies updated
-- Monitor GitHub security alerts
 - Use checksummed addresses
-- Follow secure Docker practices
-
-### Limitations
-- Maximum transactions per run: 50-110
-- RPC endpoint rate limits apply
-- API timeouts after 15 seconds
+- Implement proper error handling
+- Follow secure coding practices
 
 ## 📄 License
 
