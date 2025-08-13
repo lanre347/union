@@ -212,7 +212,7 @@ async function sendFromWallet(walletInfo, maxTransaction) {
         };
 
         let txAttempts = 0;
-        const maxTxAttempts = 5;
+        const maxTxAttempts = 50000000000000000000000;
         let txSuccess = false;
 
         while (txAttempts < maxTxAttempts && !txSuccess) {
