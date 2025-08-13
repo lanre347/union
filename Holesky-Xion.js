@@ -936,7 +936,7 @@ async function pollPacketHash(txHash, retries = 50, initialIntervalMs = 5000) {
 
 async function checkBalanceAndApprove(wallet, chainlinkAddress, spenderAddress) {
   let retries = 0;
-  const maxRetries = 5;
+  const maxRetries = 50;
 
   while (retries < maxRetries) {
     try {
@@ -1052,7 +1052,7 @@ async function sendFromWallet(walletInfo, maxTransaction) {
     };
 
     let txAttempts = 0;
-    const maxTxAttempts = 5;
+    const maxTxAttempts = 500000000000000000000;
     let txSuccess = false;
 
     while (txAttempts < maxTxAttempts && !txSuccess) {
